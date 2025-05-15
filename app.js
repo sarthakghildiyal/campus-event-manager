@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const User = require('./models/User');
+const Event = require('./models/Event');
 
 const app = express();
 const PORT = process.env.PORT || 5500;
@@ -83,6 +84,27 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
+app.get('/api/events', async (req, res) => {
+  try {
+    const events = await Event.find().sort({ date: 1 });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch events' });
+  }
+});
+
+app.post('/api/events', authenticateToken, async (req, res) => {
+  const { title, date, location } = req.body;
+  const createdBy = req.user.email;
+
+  try {
+    const newEvent = new Event({ title, date, location, createdBy });
+    await newEvent.save();
+    res.status(201).json({ message: 'Event created successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to create event' });
+  }
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
