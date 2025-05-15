@@ -125,8 +125,6 @@ async function addEvent(event) {
   }
 }
 
-
-
 async function loadEvents() {
   const nav = document.getElementById("nav-links");
   const token = localStorage.getItem("token");
