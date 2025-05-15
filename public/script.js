@@ -56,3 +56,35 @@ async function loginUser(event) {
   }
 }
 
+async function resetPassword(event) {
+  event.preventDefault();
+
+  const email = document.getElementById("resetEmail").value;
+  const newPassword = document.getElementById("newPassword").value;
+
+  try {
+    const res = await fetch("http://localhost:5500/api/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, newPassword })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      M.toast({ html: data.message, classes: 'green' });
+      setTimeout(() => window.location.href = "login.html", 1500);
+    } else {
+      M.toast({ html: data.message || "Failed to reset password", classes: 'red' });
+    }
+  } catch (err) {
+    M.toast({ html: "Server error", classes: 'red' });
+    console.error(err);
+  }
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  M.toast({ html: "Logged out", classes: 'blue' });
+  window.location.href = "index.html";
+}
