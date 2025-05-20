@@ -1,171 +1,302 @@
-document.addEventListener('DOMContentLoaded', function () {
-  M.AutoInit();
-});
+// ====================== AUTH ======================
 
-async function registerUser(event) {
+function registerUser(event) {
   event.preventDefault();
   const name = document.getElementById("name").value;
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
+  const role = document.getElementById("role").value;
 
-  try {
-    const res = await fetch("http://localhost:5500/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password })
-    });
+  let users = JSON.parse(localStorage.getItem("users")) || [];
 
-    const data = await res.json();
-
-    if (res.ok) {
-      M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "login.html", 1500);
-    } else {
-      M.toast({ html: data.message || "Registration failed", classes: 'red' });
-    }
-  } catch (err) {
-    M.toast({ html: "Server error", classes: 'red' });
-    console.error(err);
+  const exists = users.find(u => u.email === email);
+  if (exists) {
+    alert("Email already registered.");
+    return;
   }
+
+  users.push({ name, email, password, role });
+  localStorage.setItem("users", JSON.stringify(users));
+  alert("Registration successful!");
+  window.location.href = "student-login.html";
 }
 
-async function loginUser(event) {
+function loginUser(event, expectedRole) {
   event.preventDefault();
   const email = document.getElementById("loginEmail").value;
   const password = document.getElementById("loginPassword").value;
 
-  try {
-    const res = await fetch("http://localhost:5500/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+  const users = JSON.parse(localStorage.getItem("users")) || [];
+  const user = users.find(u => u.email === email && u.password === password);
 
-    const data = await res.json();
-
-    if (res.ok) {
-      localStorage.setItem("token", data.token);
-      M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "index.html", 1500);
-    } else {
-      M.toast({ html: data.message || "Login failed", classes: 'red' });
-    }
-  } catch (err) {
-    M.toast({ html: "Server error", classes: 'red' });
-    console.error(err);
+  if (!user) {
+    alert("Invalid email or password.");
+    return;
   }
-}
 
-async function resetPassword(event) {
-  event.preventDefault();
+  if (user.role !== expectedRole) {
+    alert("You are not allowed to login as this role.");
+    return;
+  }
 
-  const email = document.getElementById("resetEmail").value;
-  const newPassword = document.getElementById("newPassword").value;
+  localStorage.setItem("loggedIn", "true");
+  localStorage.setItem("user", JSON.stringify(user));
 
-  try {
-    const res = await fetch("http://localhost:5500/api/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, newPassword })
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "login.html", 1500);
-    } else {
-      M.toast({ html: data.message || "Failed to reset password", classes: 'red' });
-    }
-  } catch (err) {
-    M.toast({ html: "Server error", classes: 'red' });
-    console.error(err);
+  if (expectedRole === "student") {
+    window.location.href = "student-dashboard.html";
+  } else {
+    window.location.href = "admin-dashboard.html";
   }
 }
 
 function logout() {
-  localStorage.removeItem("token");
-  M.toast({ html: "Logged out", classes: 'blue' });
+  localStorage.removeItem("loggedIn");
+  localStorage.removeItem("user");
+  alert("You have been logged out.");
   window.location.href = "index.html";
 }
 
-async function addEvent(event) {
+// ====================== EVENTS ======================
+
+function addEvent(event) {
   event.preventDefault();
   const title = document.getElementById("eventTitle").value;
   const date = document.getElementById("eventDate").value;
   const location = document.getElementById("eventLocation").value;
-  const token = localStorage.getItem("token");
 
-  if (!token) {
-    M.toast({ html: "Please login first", classes: 'red' });
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  if (!currentUser) {
+    alert("You must be logged in to create events.");
     return;
   }
 
-  try {
-    const res = await fetch("http://localhost:5500/api/events", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({ title, date, location })
-    });
+  const newEvent = {
+    title,
+    date,
+    location,
+    createdByEmail: currentUser.email
+  };
 
-    const data = await res.json();
+  let events = JSON.parse(localStorage.getItem("events")) || [];
+  events.push(newEvent);
+  localStorage.setItem("events", JSON.stringify(events));
 
-    if (res.ok) {
-      M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "index.html", 1500);
-    } else {
-      M.toast({ html: data.message || "Failed to create event", classes: 'red' });
-    }
-  } catch (err) {
-    M.toast({ html: "Server error", classes: 'red' });
-    console.error(err);
+  alert("Event added successfully!");
+  window.location.href = "admin-dashboard.html";
+}
+
+function renderEvents() {
+  const eventsContainer = document.getElementById("events");
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const events = JSON.parse(localStorage.getItem("events")) || [];
+
+  const isAdmin = currentUser?.role === "admin";
+
+  eventsContainer.innerHTML = "";
+
+  if (!currentUser) {
+    eventsContainer.innerHTML = "<p>Please log in to view events.</p>";
+    return;
+  }
+
+  if (events.length === 0) {
+    eventsContainer.innerHTML = "<p>No events found.</p>";
+    return;
+  }
+
+  events.forEach((event, index) => {
+    const col = document.createElement("div");
+    col.className = "col-md-6 col-lg-4";
+
+    const card = document.createElement("div");
+    card.className = "card shadow-sm";
+    card.innerHTML = `
+      <div class="card-body">
+        <h5 class="card-title">${event.title}</h5>
+        <p class="card-text">📅 ${event.date}</p>
+        <p class="card-text">📍 ${event.location}</p>
+        ${isAdmin ? `
+          <button class="btn btn-warning btn-sm me-2" onclick="startEditEvent(${index})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${index})">Delete</button>
+        ` : ''}
+      </div>
+    `;
+
+    col.appendChild(card);
+    eventsContainer.appendChild(col);
+  });
+}
+
+function deleteEvent(index) {
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  let events = JSON.parse(localStorage.getItem("events")) || [];
+
+  const userEvents = events.filter(e => e.createdByEmail === currentUser.email);
+  const eventToDelete = userEvents[index];
+
+  const fullIndex = events.findIndex(e =>
+    e.title === eventToDelete.title &&
+    e.date === eventToDelete.date &&
+    e.location === eventToDelete.location &&
+    e.createdByEmail === currentUser.email
+  );
+
+  if (fullIndex !== -1 && confirm("Are you sure you want to delete this event?")) {
+    events.splice(fullIndex, 1);
+    localStorage.setItem("events", JSON.stringify(events));
+    renderEvents();
   }
 }
 
-async function loadEvents() {
-  const nav = document.getElementById("nav-links");
-  const token = localStorage.getItem("token");
+function startEditEvent(index) {
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const allEvents = JSON.parse(localStorage.getItem("events")) || [];
+  const userEvents = allEvents.filter(e => e.createdByEmail === currentUser.email);
 
-  if (nav) {
-    nav.innerHTML = token
-      ? '<li><a href="create-event.html">Add Event</a></li><li><a href="#" onclick="logout()">Logout</a></li>'
-      : '<li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li>';
-  }
+  const eventToEdit = userEvents[index];
+  localStorage.setItem("eventToEditIndex", index);
+  localStorage.setItem("eventToEdit", JSON.stringify(eventToEdit));
 
-  try {
-    const res = await fetch("http://localhost:5500/api/events");
-    const events = await res.json();
-    const eventsContainer = document.getElementById("events");
+  window.location.href = "edit-event.html";
+}
 
-    if (!eventsContainer) return;
+function updateEvent(e) {
+  e.preventDefault();
+  const title = document.getElementById("eventTitle").value;
+  const date = document.getElementById("eventDate").value;
+  const location = document.getElementById("eventLocation").value;
 
-    if (events.length === 0) {
-      eventsContainer.innerHTML = "<p>No events to display.</p>";
-    } else {
-      events.forEach(event => {
-        const col = document.createElement("div");
-        col.className = "col s12 m6 l4";
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="card-content">
-          <span class="card-title">${event.title}</span>
-          <p><i class="material-icons left">event</i>${event.date}</p>
-          <p><i class="material-icons left">location_on</i>${event.location}</p>
-          </div>`;
-        col.appendChild(card);
-        eventsContainer.appendChild(col);
-      });
-    }
-  } catch (err) {
-    console.error("Failed to fetch events:", err);
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const eventToEdit = JSON.parse(localStorage.getItem("eventToEdit"));
+  const allEvents = JSON.parse(localStorage.getItem("events")) || [];
+
+  const index = allEvents.findIndex(e =>
+    e.title === eventToEdit.title &&
+    e.date === eventToEdit.date &&
+    e.location === eventToEdit.location &&
+    e.createdByEmail === currentUser.email
+  );
+
+  if (index !== -1) {
+    allEvents[index] = { title, date, location, createdByEmail: currentUser.email };
+    localStorage.setItem("events", JSON.stringify(allEvents));
+    localStorage.removeItem("eventToEdit");
+    localStorage.removeItem("eventToEditIndex");
+    alert("Event updated successfully!");
+    window.location.href = "admin-dashboard.html";
+  } else {
+    alert("Event not found.");
   }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-  M.AutoInit();
-  loadEvents();
-});
+// ====================== EVENT REQUESTS ======================
+
+function submitEventRequest(event) {
+  event.preventDefault();
+  const title = document.getElementById("eventTitle").value;
+  const date = document.getElementById("eventDate").value;
+  const location = document.getElementById("eventLocation").value;
+  const description = document.getElementById("eventDesc").value;
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const request = {
+    title,
+    date,
+    location,
+    description,
+    requestedBy: user?.email || "unknown"
+  };
+
+  let requests = JSON.parse(localStorage.getItem("eventRequests")) || [];
+  requests.push(request);
+  localStorage.setItem("eventRequests", JSON.stringify(requests));
+
+  alert("Your request has been sent to the admin.");
+  window.location.href = "student-dashboard.html";
+}
+
+function renderEventRequests() {
+  const container = document.getElementById("requestsContainer");
+  let requests = JSON.parse(localStorage.getItem("eventRequests")) || [];
+
+  container.innerHTML = "";
+
+  if (requests.length === 0) {
+    container.innerHTML = "<p>No pending requests.</p>";
+    return;
+  }
+
+  requests.forEach((req, index) => {
+    const card = document.createElement("div");
+    card.className = "card mb-3 shadow";
+    card.innerHTML = `
+      <div class="card-body">
+        <h5>${req.title}</h5>
+        <p><strong>Date:</strong> ${req.date}</p>
+        <p><strong>Location:</strong> ${req.location}</p>
+        <p><strong>Description:</strong> ${req.description || "N/A"}</p>
+        <p><strong>Requested By:</strong> ${req.requestedBy}</p>
+        <button class="btn btn-success btn-sm me-2" onclick="approveRequest(${index})">Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectRequest(${index})">Reject</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function approveRequest(index) {
+  let requests = JSON.parse(localStorage.getItem("eventRequests")) || [];
+  const approved = requests[index];
+
+  let events = JSON.parse(localStorage.getItem("events")) || [];
+  events.push({
+    title: approved.title,
+    date: approved.date,
+    location: approved.location,
+    createdByEmail: approved.requestedBy
+  });
+  localStorage.setItem("events", JSON.stringify(events));
+
+  requests.splice(index, 1);
+  localStorage.setItem("eventRequests", JSON.stringify(requests));
+
+  alert("Event approved and added.");
+  renderEventRequests();
+}
+
+function rejectRequest(index) {
+  let requests = JSON.parse(localStorage.getItem("eventRequests")) || [];
+  requests.splice(index, 1);
+  localStorage.setItem("eventRequests", JSON.stringify(requests));
+
+  alert("Request rejected.");
+  renderEventRequests();
+}
+
+// ====================== PROFILE HANDLING ======================
+
+function loadUserDetails() {
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  document.getElementById("userName").value = user.name || "";
+  document.getElementById("userEmail").value = user.email || "";
+  document.getElementById("userPhone").value = user.phone || "";
+}
+
+function saveUserDetails(event) {
+  event.preventDefault();
+  let user = JSON.parse(localStorage.getItem("user")) || {};
+  user.name = document.getElementById("userName").value;
+  user.email = document.getElementById("userEmail").value;
+  user.phone = document.getElementById("userPhone").value;
+
+  localStorage.setItem("user", JSON.stringify(user));
+
+  let users = JSON.parse(localStorage.getItem("users")) || [];
+  const index = users.findIndex(u => u.email === user.email);
+  if (index !== -1) {
+    users[index] = user;
+    localStorage.setItem("users", JSON.stringify(users));
+  }
+
+  alert("Details updated successfully!");
+}
