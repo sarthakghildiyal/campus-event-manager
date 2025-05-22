@@ -91,7 +91,6 @@ function renderEvents() {
   const events = JSON.parse(localStorage.getItem("events")) || [];
 
   const isAdmin = currentUser?.role === "admin";
-
   eventsContainer.innerHTML = "";
 
   if (!currentUser) {
@@ -110,14 +109,22 @@ function renderEvents() {
 
     const card = document.createElement("div");
     card.className = "card shadow-sm";
+    card.style.cursor = "pointer";
+
+    // ✅ Clicking a card saves the selected event and opens event-details.html
+    card.onclick = () => {
+      localStorage.setItem("selectedEvent", JSON.stringify(event));
+      window.location.href = "event-details.html";
+    };
+
     card.innerHTML = `
       <div class="card-body">
         <h5 class="card-title">${event.title}</h5>
         <p class="card-text">📅 ${event.date}</p>
         <p class="card-text">📍 ${event.location}</p>
         ${isAdmin ? `
-          <button class="btn btn-warning btn-sm me-2" onclick="startEditEvent(${index})">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${index})">Delete</button>
+          <button class="btn btn-warning btn-sm me-2" onclick="startEditEvent(${index}); event.stopPropagation();">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${index}); event.stopPropagation();">Delete</button>
         ` : ''}
       </div>
     `;
@@ -126,6 +133,7 @@ function renderEvents() {
     eventsContainer.appendChild(col);
   });
 }
+
 
 function deleteEvent(index) {
   const currentUser = JSON.parse(localStorage.getItem("user"));
