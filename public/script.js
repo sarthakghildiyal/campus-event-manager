@@ -142,6 +142,7 @@ async function resetPassword(event) {
 
 async function addEvent(event) {
   event.preventDefault();
+
   const title = document.getElementById("eventTitle").value;
   const date = document.getElementById("eventDate").value;
   const location = document.getElementById("eventLocation").value;
@@ -232,26 +233,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", () => {
   const navLinks = document.getElementById("nav-links");
-
   const storedUser = localStorage.getItem("currentUser");
   const user = storedUser ? JSON.parse(storedUser) : null;
 
-  if (user) {
-    if (user.role === "admin") {
-      navLinks.innerHTML = `
-        <li><a href="add-event.html">Add Event</a></li>
+  if (navLinks) {
+    if (user) {
+      if (user.role === "admin") {
+        navLinks.innerHTML = `
+        <li><a href="create-event.html">Add Event</a></li>
         <li><a href="#" onclick="logout()">Logout</a></li>
       `;
-    } else if (user.role === "student") {
-      navLinks.innerHTML = `
+      } else if (user.role === "student") {
+        navLinks.innerHTML = `
         <li><a href="#" onclick="logout()">Logout</a></li>
       `;
-    }
-  } else {
-    navLinks.innerHTML = `
+      }
+    } else {
+      navLinks.innerHTML = `
       <li><a href="#loginModal" class="modal-trigger">Login</a></li>
       <li><a href="#registerModal" class="modal-trigger">Register</a></li>
     `;
+    }
   }
 
   // Initialize Materialize modals

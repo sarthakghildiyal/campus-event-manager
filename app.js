@@ -18,6 +18,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(express.json());
 
+// Middleware to verify JWT token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Token required" });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid token" });
+    }
+
+    req.user = user;
+    next();
+  });
+}
+
+
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -79,7 +99,7 @@ app.post('/api/admin-login', async (req, res) => {
 
     //const token = jwt.sign({ email: user.email, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '2h' });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, "your-secret-key", { expiresIn: "2h" });
+    const token = jwt.sign({ id: user._id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: "2h" });
 
     //res.status(200).json({ message: 'Login successful', token });
 
@@ -108,7 +128,7 @@ app.post('/api/student-login', async (req, res) => {
 
     //const token = jwt.sign({ email: user.email, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '2h' });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, "your-secret-key", { expiresIn: "2h" });
+    const token = jwt.sign({ id: user._id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: "2h" });
 
     //res.status(200).json({ message: 'Login successful', token });
 
@@ -154,6 +174,10 @@ app.get('/api/events', async (req, res) => {
 app.post('/api/events', authenticateToken, async (req, res) => {
   const { title, date, location } = req.body;
   const createdBy = req.user.email;
+
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Only admins can create events" });
+  }
 
   try {
     const newEvent = new Event({ title, date, location, createdBy });
