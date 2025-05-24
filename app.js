@@ -99,7 +99,7 @@ app.post('/api/admin-login', async (req, res) => {
 
     //const token = jwt.sign({ email: user.email, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '2h' });
 
-    const token = jwt.sign({ id: user._id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: "2h" });
+    const token = jwt.sign({ id: user._id, role: user.role, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: "2h" });
 
     //res.status(200).json({ message: 'Login successful', token });
 
@@ -128,7 +128,7 @@ app.post('/api/student-login', async (req, res) => {
 
     //const token = jwt.sign({ email: user.email, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '2h' });
 
-    const token = jwt.sign({ id: user._id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: "2h" });
+    const token = jwt.sign({ id: user._id, role: user.role, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: "2h" });
 
     //res.status(200).json({ message: 'Login successful', token });
 
@@ -187,6 +187,83 @@ app.post('/api/events', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Failed to create event' });
   }
 });
+
+app.get("/api/students", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const students = await User.find({ role: "student" }).select("-password");
+    res.status(200).json(students);
+  } catch (err) {
+    console.error("Error fetching students:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.put("/api/admin/profile", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const { name, email } = req.body;
+
+    const updated = await User.findOneAndUpdate(
+      // current email from token
+      { email: req.user.email },
+      // updated data
+      { name, email },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        name: updated.name,
+        email: updated.email,
+        role: updated.role
+      }
+    });
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+app.put("/api/student/profile", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "student") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const { name, email } = req.body;
+
+    const updated = await User.findOneAndUpdate(
+      // current email from token
+      { email: req.user.email },
+      // updated data
+      { name, email },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        name: updated.name,
+        email: updated.email,
+        role: updated.role
+      }
+    });
+  } catch (error) {
+    console.error("Student profile update error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

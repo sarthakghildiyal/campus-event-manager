@@ -66,7 +66,7 @@ async function loginUser(event) {
 
     if (res.ok) {
       localStorage.setItem("token", data.token);
-      localStorage.setItem("currentUser", JSON.stringify(data.user)); // store user info including role
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
 
       //   localStorage.setItem("token", data.token);
       M.toast({ html: data.message, classes: 'green' });
@@ -220,6 +220,51 @@ async function loadEvents() {
   }
 }
 
+async function fetchAndDisplayStudents() {
+  const container = document.getElementById("studentsList");
+  const token = localStorage.getItem("token");
+
+  if (!container || !token) return;
+
+  try {
+    const res = await fetch("http://localhost:5500/api/students", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch students");
+    }
+
+    const students = await res.json();
+
+    if (students.length === 0) {
+      container.innerHTML = "<p>No registered students.</p>";
+    } else {
+      students.forEach(student => {
+        const div = document.createElement("div");
+        div.className = "col s12 m6 l4";
+        div.innerHTML = `
+          <div class="card blue lighten-5 z-depth-2">
+            <div class="card-content">
+              <span class="card-title">${student.name}</span>
+              <p><strong>Email:</strong> ${student.email}</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = "<p>Error loading students. Please try again later.</p>";
+  }
+}
+
+
 document.addEventListener("DOMContentLoaded", function () {
   M.AutoInit();
   loadEvents();
@@ -240,11 +285,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (user) {
       if (user.role === "admin") {
         navLinks.innerHTML = `
+        <li><a href="admin-dashboard.html">Dashboard</a></li>
         <li><a href="create-event.html">Add Event</a></li>
         <li><a href="#" onclick="logout()">Logout</a></li>
       `;
       } else if (user.role === "student") {
         navLinks.innerHTML = `
+        <li><a href="student-dashboard.html">Dashboard</a></li>
         <li><a href="#" onclick="logout()">Logout</a></li>
       `;
       }
@@ -265,4 +312,73 @@ function logout() {
   localStorage.removeItem("currentUser");
   M.toast({ html: "Logged out", classes: 'blue' });
   window.location.href = "index.html";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  fetchAndDisplayStudents();
+});
+
+async function updateAdminProfile(event) {
+  event.preventDefault();
+
+  const name = document.getElementById("userName").value;
+  const email = document.getElementById("userEmail").value;
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch("http://localhost:5500/api/admin/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ name, email })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      M.toast({ html: data.message, classes: 'green' });
+      window.location.href = "admin-dashboard.html";
+    } else {
+      M.toast({ html: data.message || "Update failed", classes: 'red' });
+    }
+  } catch (err) {
+    console.error(err);
+    M.toast({ html: "Server error", classes: 'red' });
+  }
+}
+
+
+async function updateStudentProfile(event) {
+  event.preventDefault();
+
+  const name = document.getElementById("userName").value;
+  const email = document.getElementById("userEmail").value;
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch("http://localhost:5500/api/student/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ name, email })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      M.toast({ html: data.message, classes: 'green' });
+      window.location.href = "student-dashboard.html";
+    } else {
+      M.toast({ html: data.message || "Update failed", classes: 'red' });
+    }
+  } catch (err) {
+    console.error(err);
+    M.toast({ html: "Server error", classes: 'red' });
+  }
 }
