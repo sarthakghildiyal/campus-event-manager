@@ -263,6 +263,20 @@ app.put("/api/student/profile", authenticateToken, async (req, res) => {
   }
 });
 
+app.get("/api/admin/events", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const events = await Event.find({ createdBy: req.user.email }).sort({ date: -1 });
+
+    res.status(200).json(events);
+  } catch (error) {
+    console.error("Error fetching admin events:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 app.get('/', (req, res) => {

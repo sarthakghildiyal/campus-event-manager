@@ -382,3 +382,66 @@ async function updateStudentProfile(event) {
     M.toast({ html: "Server error", classes: 'red' });
   }
 }
+
+async function fetchAdminEvents() {
+  const token = localStorage.getItem("token");
+  const container = document.getElementById("adminEventsList");
+
+  if (!container || !token) return;
+
+  try {
+    const res = await fetch("http://localhost:5500/api/admin/events", {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      container.innerHTML = "<p class='red-text'>Failed to load events.</p>";
+      return;
+    }
+
+    const events = await res.json();
+
+    if (events.length === 0) {
+      container.innerHTML = "<p>No events found.</p>";
+    } else {
+      events.forEach(event => {
+        const card = document.createElement("div");
+        card.className = "col s12 m6 l4";
+
+        card.innerHTML = `
+          <div class="card z-depth-2">
+            <div class="card-content">
+              <span class="card-title"><strong>Event: </strong>${event.title}</span>
+              <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString()}</p>
+              <p><strong>Location:</strong> ${event.location}</p>
+              <p><strong>Created By:</strong> ${event.createdBy}</p>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+  } catch (error) {
+    console.error("Fetch admin events error:", error);
+    container.innerHTML = "<p class='red-text'>Error loading events.</p>";
+  }
+}
+
+function fetchEventsForStudents() {
+  const container = document.getElementById("studentEventsList");
+  if (!container) return;
+
+  // fetch and show events for students to book
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (user?.role === "admin") {
+    fetchAdminEvents();
+  } else {
+    fetchStudentEvents();
+  }
+});
