@@ -7,19 +7,34 @@ async function registerUser(event) {
   const name = document.getElementById("name").value;
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
+  //const role = "admin";
+
+  // Determine endpoint based on page URL
+  let endpoint = "http://localhost:5500/api/student-register";
+  if (window.location.href.includes("admin-login")) {
+    endpoint = "http://localhost:5500/api/admin-register";
+  }
+
+  let role = "student";
+  if (window.location.href.includes("admin-register")) {
+    role = "admin";
+  }
 
   try {
-    const res = await fetch("http://localhost:5500/api/register", {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify({ name, email, password, role })
     });
 
     const data = await res.json();
 
     if (res.ok) {
       M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "login.html", 1500);
+      // setTimeout(() => window.location.href = "admin-login.html", 1500);
+      setTimeout(() => {
+        window.location.href = role === "admin" ? "admin-login.html" : "student-login.html";
+      }, 1500);
     } else {
       M.toast({ html: data.message || "Registration failed", classes: 'red' });
     }
@@ -34,8 +49,14 @@ async function loginUser(event) {
   const email = document.getElementById("loginEmail").value;
   const password = document.getElementById("loginPassword").value;
 
+  // Determine endpoint based on page URL
+  let endpoint = "http://localhost:5500/api/student-login";
+  if (window.location.href.includes("admin-login")) {
+    endpoint = "http://localhost:5500/api/admin-login";
+  }
+
   try {
-    const res = await fetch("http://localhost:5500/api/login", {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
@@ -45,6 +66,9 @@ async function loginUser(event) {
 
     if (res.ok) {
       localStorage.setItem("token", data.token);
+      localStorage.setItem("currentUser", JSON.stringify(data.user)); // store user info including role
+
+      //   localStorage.setItem("token", data.token);
       M.toast({ html: data.message, classes: 'green' });
       setTimeout(() => window.location.href = "index.html", 1500);
     } else {
@@ -55,6 +79,33 @@ async function loginUser(event) {
     console.error(err);
   }
 }
+
+// async function loginUserS(event) {
+//   event.preventDefault();
+//   const email = document.getElementById("loginEmail").value;
+//   const password = document.getElementById("loginPassword").value;
+
+//   try {
+//     const res = await fetch("http://localhost:5500/api/student-login", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ email, password })
+//     });
+
+//     const data = await res.json();
+
+//     if (res.ok) {
+//       localStorage.setItem("token", data.token);
+//       M.toast({ html: data.message, classes: 'green' });
+//       setTimeout(() => window.location.href = "index.html", 1500);
+//     } else {
+//       M.toast({ html: data.message || "Login failed", classes: 'red' });
+//     }
+//   } catch (err) {
+//     M.toast({ html: "Server error", classes: 'red' });
+//     console.error(err);
+//   }
+// }
 
 async function resetPassword(event) {
   event.preventDefault();
@@ -73,7 +124,7 @@ async function resetPassword(event) {
 
     if (res.ok) {
       M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "login.html", 1500);
+      setTimeout(() => window.location.href = "index.html", 1500);
     } else {
       M.toast({ html: data.message || "Failed to reset password", classes: 'red' });
     }
@@ -83,11 +134,11 @@ async function resetPassword(event) {
   }
 }
 
-function logout() {
-  localStorage.removeItem("token");
-  M.toast({ html: "Logged out", classes: 'blue' });
-  window.location.href = "index.html";
-}
+// function logout() {
+//   localStorage.removeItem("token");
+//   M.toast({ html: "Logged out", classes: 'blue' });
+//   window.location.href = "index.html";
+// }
 
 async function addEvent(event) {
   event.preventDefault();
@@ -129,11 +180,14 @@ async function loadEvents() {
   const nav = document.getElementById("nav-links");
   const token = localStorage.getItem("token");
 
-  if (nav) {
-    nav.innerHTML = token
-      ? '<li><a href="create-event.html">Add Event</a></li><li><a href="#" onclick="logout()">Logout</a></li>'
-      : '<li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li>';
-  }
+  // if (nav) {
+  //   nav.innerHTML = token
+  //     // ? '<li><a href="create-event.html">Add Event</a></li><li><a href="#" onclick="logout()">Logout</a></li>'
+  //     // : '<li><a href="admin-login.html">Login</a></li><li><a href="register.html">Register</a></li>';
+  //     // <!-- Trigger Buttons -->
+  //     ? '<a href="#" onclick="logout()">Logout</a></li>'
+  //     : '<li><a class="modal-trigger" href="#loginModal">Login</a></li><li><a class="modal-trigger" href="#registerModal">Register</a></li>';
+  // }
 
   try {
     const res = await fetch("http://localhost:5500/api/events");
@@ -169,3 +223,44 @@ document.addEventListener("DOMContentLoaded", function () {
   M.AutoInit();
   loadEvents();
 });
+
+// document.addEventListener('DOMContentLoaded', function () {
+//   var modals = document.querySelectorAll('.modal');
+//   M.Modal.init(modals);
+// });
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const navLinks = document.getElementById("nav-links");
+
+  const storedUser = localStorage.getItem("currentUser");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+
+  if (user) {
+    if (user.role === "admin") {
+      navLinks.innerHTML = `
+        <li><a href="add-event.html">Add Event</a></li>
+        <li><a href="#" onclick="logout()">Logout</a></li>
+      `;
+    } else if (user.role === "student") {
+      navLinks.innerHTML = `
+        <li><a href="#" onclick="logout()">Logout</a></li>
+      `;
+    }
+  } else {
+    navLinks.innerHTML = `
+      <li><a href="#loginModal" class="modal-trigger">Login</a></li>
+      <li><a href="#registerModal" class="modal-trigger">Register</a></li>
+    `;
+  }
+
+  // Initialize Materialize modals
+  M.Modal.init(document.querySelectorAll('.modal'));
+});
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("currentUser");
+  M.toast({ html: "Logged out", classes: 'blue' });
+  window.location.href = "index.html";
+}
