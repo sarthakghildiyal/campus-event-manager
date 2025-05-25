@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const User = require('./models/User');
 const Event = require('./models/Event');
+const Registration = require("./models/Registration");
 
 const app = express();
 const PORT = process.env.PORT || 5500;
@@ -24,12 +25,12 @@ function authenticateToken(req, res, next) {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Token required" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: "Invalid token" });
+      return res.status(403).json({ message: "Access Forbidden" });
     }
 
     req.user = user;
@@ -161,6 +162,7 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
+//Get all events and load on index.html page
 app.get('/api/events', async (req, res) => {
   try {
     const events = await Event.find().sort({ date: 1 });
@@ -278,7 +280,7 @@ app.get("/api/admin/events", authenticateToken, async (req, res) => {
 });
 
 //Admin Get Selected Event
-app.get("/api/events/:id", authenticateToken, async (req, res) => {
+app.get("/api/events/:id", async (req, res) => {        //Removed authenticateToken from here to make event details public
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });
@@ -319,6 +321,44 @@ app.delete("/api/events/:id", authenticateToken, async (req, res) => {
     await event.deleteOne();
     res.json({ message: "Event deleted successfully" });
   } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//Register for an event
+app.post("/api/registrations", authenticateToken, async (req, res) => {
+  try {
+    const { eventId, studentEmail, studentName, phone } = req.body;
+
+    const reg = new Registration({
+      eventId,
+      studentEmail,
+      studentName,
+      phone,
+      registeredAt: new Date()
+    });
+
+    await reg.save();
+    res.status(201).json({ message: "Registered successfully" });
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//Get registered events for a student
+app.get("/api/registrations", authenticateToken, async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (req.user.role !== "student" || req.user.email !== email) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const registrations = await Registration.find({ studentEmail: email }).populate("eventId");
+    res.json(registrations);
+  } catch (err) {
+    console.error("Error fetching registrations:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

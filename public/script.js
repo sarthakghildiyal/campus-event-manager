@@ -192,8 +192,9 @@ async function loadEvents() {
 
   try {
     const res = await fetch("http://localhost:5500/api/events");
-    const events = await res.json();
+
     const eventsContainer = document.getElementById("events");
+    const events = await res.json();
 
     if (!eventsContainer) return;
 
@@ -206,6 +207,7 @@ async function loadEvents() {
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
+          <div class="card hoverable event-card" data-id="${event._id}">
           <div class="card-content">
           <span class="card-title">${event.title}</span>
           <p><i class="material-icons left">event</i>${event.date}</p>
@@ -214,11 +216,26 @@ async function loadEvents() {
         col.appendChild(card);
         eventsContainer.appendChild(col);
       });
+      enableEventCardClicks();
     }
   } catch (err) {
     console.error("Failed to fetch events:", err);
   }
 }
+
+function enableEventCardClicks() {
+  const cards = document.querySelectorAll(".event-card");
+
+  cards.forEach(card => {
+    card.addEventListener("click", () => {
+      const id = card.getAttribute("data-id");
+      if (id) {
+        window.location.href = `event-details.html?id=${id}`;
+      }
+    });
+  });
+}
+
 
 async function fetchAndDisplayStudents() {
   const container = document.getElementById("studentsList");
@@ -433,12 +450,68 @@ async function fetchAdminEvents() {
   }
 }
 
-function fetchEventsForStudents() {
+async function loadStudentRegistrations() {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
   const container = document.getElementById("studentEventsList");
-  if (!container) return;
 
-  // fetch and show events for students to book
+  if (!user || user.role !== "student" || !container) return;
+
+  try {
+    const res = await fetch(`http://localhost:5500/api/registrations?email=${user.email}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    const registrations = await res.json();
+
+    container.innerHTML = "";
+
+    if (!registrations.length) {
+      container.innerHTML = "<p>You haven't registered for any events.</p>";
+      return;
+    }
+
+    if (registrations.length === 0) {
+      container.innerHTML = "<p>You haven't registered for any events.</p>";
+      return;
+    }
+
+    registrations.forEach(reg => {
+      const event = reg.eventId;
+      const card = document.createElement("div");
+      card.className = "col s12 m6 l4";
+      card.innerHTML = `
+        <div class="card">
+          <div class="card-content">
+            <span class="card-title">${event.title}</span>
+            <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString()}</p>
+            <p><strong>Location:</strong> ${event.location}</p>
+            <p><strong>Phone:</strong> ${reg.phone}</p>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Error loading registrations:", err);
+    container.innerHTML = "<p>Error loading your events.</p>";
+  }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.pathname.includes("student-dashboard.html")) {
+    loadStudentRegistrations();
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.pathname.includes("index.html")) {
+    fetchEvents();
+  }
+});
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const modal = document.querySelectorAll('.modal');
@@ -525,6 +598,112 @@ document.addEventListener("DOMContentLoaded", () => {
   if (user?.role === "admin") {
     fetchAdminEvents();
   } else {
-    fetchStudentEvents();
+    loadStudentRegistrations();
+  }
+});
+
+
+async function loadEventDetailsPage() {
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get("id");
+  const container = document.getElementById("eventDetails");
+
+  if (!eventId || !container) return;
+
+  try {
+    const res = await fetch(`http://localhost:5500/api/events/${eventId}`);
+    const event = await res.json();
+
+    container.innerHTML = `
+      <h3>${event.title}</h3>
+      <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString()}</p>
+      <p><strong>Location:</strong> ${event.location}</p>
+      <p><strong>Organized by:</strong> ${event.createdBy}</p>
+    `;
+
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (user?.role === "student") {
+      eventDetails.style.display = "block";
+    }
+
+    // Save for later use (registration)
+    localStorage.setItem("selectedEventId", eventId);
+  } catch (err) {
+    console.error("Error loading event:", err);
+    container.innerHTML = "<p class='text-danger'>Failed to load event details.</p>";
+  }
+}
+
+function goToRegistrationPage() {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (!user || user.role !== "student") {
+    alert("You must be logged in as a student to register.");
+    window.location.href = "student-login.html";
+    return;
+  }
+
+  const id = localStorage.getItem("selectedEventId");
+  if (id) {
+    window.location.href = `event-registration.html?id=${id}`;
+  }
+}
+
+
+async function submitEventRegistration(e) {
+  e.preventDefault();
+
+  const phone = document.getElementById("phone").value;
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get("id");
+
+  if (!user || !eventId) return;
+
+  try {
+    const res = await fetch("http://localhost:5500/api/registrations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({
+        eventId,
+        studentEmail: user.email,
+        studentName: user.name,
+        phone
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Registration successful!");
+      window.location.href = "student-dashboard.html";
+    } else {
+      alert(data.message || "Registration failed");
+    }
+  } catch (err) {
+    console.error("Registration error:", err);
+    alert("Something went wrong. Try again.");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.pathname.includes("event-details.html")) {
+    loadEventDetailsPage();
+  }
+
+  if (window.location.pathname.includes("event-registration.html")) {
+    document.getElementById("registrationForm")
+      .addEventListener("submit", submitEventRegistration);
+  }
+});
+
+//Check this if admin display/edit events are affected
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.pathname.includes("edit-event.html")) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get("id");
+    loadEvent(eventId);
   }
 });
