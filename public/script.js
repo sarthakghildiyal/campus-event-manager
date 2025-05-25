@@ -417,6 +417,9 @@ async function fetchAdminEvents() {
               <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString()}</p>
               <p><strong>Location:</strong> ${event.location}</p>
               <p><strong>Created By:</strong> ${event.createdBy}</p>
+              <div class="card-action">
+              <a href="edit-event.html?id=${event._id}" class="btn btn-sm blue">Edit</a>
+              </div>
             </div>
           </div>
         `;
@@ -436,6 +439,86 @@ function fetchEventsForStudents() {
 
   // fetch and show events for students to book
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.querySelectorAll('.modal');
+  M.Modal.init(modal);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventId = urlParams.get("id");
+  if (eventId) {
+    loadEvent(eventId);
+  }
+});
+
+//Get selected event - admin
+async function loadEvent(id) {
+  const res = await fetch(`http://localhost:5500/api/events/${id}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    }
+  });
+  const event = await res.json();
+
+  document.getElementById("eventTitle").value = event.title;
+  document.getElementById("eventDate").value = event.date.split("T")[0];
+  document.getElementById("eventLocation").value = event.location;
+  M.updateTextFields();
+}
+
+//Update selected event - admin
+async function updateEvent() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventId = urlParams.get("id");
+
+  const title = document.getElementById("eventTitle").value;
+  const date = document.getElementById("eventDate").value;
+  const location = document.getElementById("eventLocation").value;
+
+  const res = await fetch(`http://localhost:5500/api/events/${eventId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    },
+    body: JSON.stringify({ title, date, location })
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    M.toast({ html: "Event updated successfully", classes: 'green' });
+    setTimeout(() => window.location.href = "admin-dashboard.html", 1500);
+  } else {
+    M.toast({ html: data.message || "Failed to update", classes: 'red' });
+  }
+}
+
+function confirmDelete() {
+  const modal = M.Modal.getInstance(document.getElementById("deleteModal"));
+  modal.open();
+}
+
+//Delete selected event - admin
+async function deleteEvent() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventId = urlParams.get("id");
+
+  const res = await fetch(`http://localhost:5500/api/events/${eventId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    }
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    M.toast({ html: "Event deleted", classes: 'green' });
+    setTimeout(() => window.location.href = "admin-dashboard.html", 1500);
+  } else {
+    M.toast({ html: data.message || "Failed to delete", classes: 'red' });
+  }
+}
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("currentUser"));
