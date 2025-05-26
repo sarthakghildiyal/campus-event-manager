@@ -443,9 +443,11 @@ async function fetchAdminEvents() {
               <p><strong>Location:</strong> ${event.location}</p>
               <p><strong>Created By:</strong> ${event.createdBy}</p>
               <div class="card-action">
-              <a href="edit-event.html?id=${
+              <a href="edit-event.html?id=${event._id}" 
+              class="btn btn-sm blue">Edit</a>
+              <a href="view-registrations.html?id=${
                 event._id
-              }" class="btn btn-sm blue">Edit</a>
+              }" class="btn btn-sm blue">View Registered Students</a>
               </div>
             </div>
           </div>
@@ -823,3 +825,56 @@ async function populateAdminDropdown() {
     console.error("Failed to load admin list", err);
   }
 }
+
+async function loadEventRegistrations() {
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get("id");
+  const titleContainer = document.getElementById("eventTitle");
+  const tableBody = document.getElementById("registrationTableBody");
+
+  if (!eventId || !tableBody || !titleContainer) return;
+
+  try {
+    // Optional: load event title
+    const eventRes = await fetch(`http://localhost:5500/api/events/${eventId}`);
+    const event = await eventRes.json();
+    titleContainer.textContent = `Registrations for "${event.title}"`;
+
+    const res = await fetch(
+      `http://localhost:5500/api/registrations/event/${eventId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    const registrations = await res.json();
+    tableBody.innerHTML = "";
+
+    if (!registrations.length) {
+      tableBody.innerHTML = `<tr><td colspan="4">No registrations found.</td></tr>`;
+      return;
+    }
+
+    registrations.forEach((reg) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${reg.studentName}</td>
+        <td>${reg.studentEmail}</td>
+        <td>${reg.phone || "N/A"}</td>
+        <td>${new Date(reg.registeredAt).toLocaleString()}</td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Failed to load event registrations:", err);
+    tableBody.innerHTML = `<tr><td colspan="4">Error loading data</td></tr>`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.pathname.includes("view-registrations.html")) {
+    loadEventRegistrations();
+  }
+});

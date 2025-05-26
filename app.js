@@ -231,6 +231,26 @@ app.post("/api/events", authenticateToken, async (req, res) => {
   }
 });
 
+app.get(
+  "/api/registrations/event/:eventId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const registrations = await Registration.find({
+        eventId: req.params.eventId,
+      });
+      res.json(registrations);
+    } catch (err) {
+      console.error("Error fetching registrations for event:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
 app.get("/api/students", authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
