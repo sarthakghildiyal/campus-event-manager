@@ -34,7 +34,7 @@
         <div class="card shadow">
           <div class="card-body">
             <h3 class="card-title text-center mb-4">Edit Event</h3>
-            <!-- <form onsubmit="updateEvent(event)"> -->
+            
             <div class="mb-3">
               <label for="eventTitle" class="form-label">Event Title</label>
               <input type="text" id="eventTitle" class="form-control" required>
@@ -47,6 +47,10 @@
               <label for="eventLocation" class="form-label">Location</label>
               <input type="text" id="eventLocation" class="form-control" required>
             </div>
+            <div class="input-field">
+              <textarea id="eventDescription" class="materialize-textarea" required></textarea>
+              <label for="eventDescription">Event Description</label>
+            </div>            
             <button type="button" class="btn btn-primary w-100" onclick="updateEvent()">Update Event</button>
             <br><br>
             <button type="button" class="btn btn-danger w-100" onclick="confirmDelete()">Delete Event</button>

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener("DOMContentLoaded", function () {
   M.AutoInit();
 });
 
@@ -24,22 +24,23 @@ async function registerUser(event) {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role })
+      body: JSON.stringify({ name, email, password, role }),
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      M.toast({ html: data.message, classes: 'green' });
+      M.toast({ html: data.message, classes: "green" });
       // setTimeout(() => window.location.href = "admin-login.html", 1500);
       setTimeout(() => {
-        window.location.href = role === "admin" ? "admin-login.html" : "student-login.html";
+        window.location.href =
+          role === "admin" ? "admin-login.html" : "student-login.html";
       }, 1500);
     } else {
-      M.toast({ html: data.message || "Registration failed", classes: 'red' });
+      M.toast({ html: data.message || "Registration failed", classes: "red" });
     }
   } catch (err) {
-    M.toast({ html: "Server error", classes: 'red' });
+    M.toast({ html: "Server error", classes: "red" });
     console.error(err);
   }
 }
@@ -59,7 +60,7 @@ async function loginUser(event) {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
@@ -69,13 +70,13 @@ async function loginUser(event) {
       localStorage.setItem("currentUser", JSON.stringify(data.user));
 
       //   localStorage.setItem("token", data.token);
-      M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "index.html", 1500);
+      M.toast({ html: data.message, classes: "green" });
+      setTimeout(() => (window.location.href = "index.html"), 1500);
     } else {
-      M.toast({ html: data.message || "Login failed", classes: 'red' });
+      M.toast({ html: data.message || "Login failed", classes: "red" });
     }
   } catch (err) {
-    M.toast({ html: "Server error", classes: 'red' });
+    M.toast({ html: "Server error", classes: "red" });
     console.error(err);
   }
 }
@@ -117,19 +118,22 @@ async function resetPassword(event) {
     const res = await fetch("http://localhost:5500/api/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, newPassword })
+      body: JSON.stringify({ email, newPassword }),
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "index.html", 1500);
+      M.toast({ html: data.message, classes: "green" });
+      setTimeout(() => (window.location.href = "index.html"), 1500);
     } else {
-      M.toast({ html: data.message || "Failed to reset password", classes: 'red' });
+      M.toast({
+        html: data.message || "Failed to reset password",
+        classes: "red",
+      });
     }
   } catch (err) {
-    M.toast({ html: "Server error", classes: 'red' });
+    M.toast({ html: "Server error", classes: "red" });
     console.error(err);
   }
 }
@@ -146,10 +150,11 @@ async function addEvent(event) {
   const title = document.getElementById("eventTitle").value;
   const date = document.getElementById("eventDate").value;
   const location = document.getElementById("eventLocation").value;
+  const description = document.getElementById("eventDescription").value;
   const token = localStorage.getItem("token");
 
   if (!token) {
-    M.toast({ html: "Please login first", classes: 'red' });
+    M.toast({ html: "Please login first", classes: "red" });
     return;
   }
 
@@ -158,21 +163,24 @@ async function addEvent(event) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ title, date, location })
+      body: JSON.stringify({ title, date, location, description }),
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      M.toast({ html: data.message, classes: 'green' });
-      setTimeout(() => window.location.href = "index.html", 1500);
+      M.toast({ html: data.message, classes: "green" });
+      setTimeout(() => (window.location.href = "index.html"), 1500);
     } else {
-      M.toast({ html: data.message || "Failed to create event", classes: 'red' });
+      M.toast({
+        html: data.message || "Failed to create event",
+        classes: "red",
+      });
     }
   } catch (err) {
-    M.toast({ html: "Server error", classes: 'red' });
+    M.toast({ html: "Server error", classes: "red" });
     console.error(err);
   }
 }
@@ -201,7 +209,7 @@ async function loadEvents() {
     if (events.length === 0) {
       eventsContainer.innerHTML = "<p>No events to display.</p>";
     } else {
-      events.forEach(event => {
+      events.forEach((event) => {
         const col = document.createElement("div");
         col.className = "col s12 m6 l4";
         const card = document.createElement("div");
@@ -226,7 +234,7 @@ async function loadEvents() {
 function enableEventCardClicks() {
   const cards = document.querySelectorAll(".event-card");
 
-  cards.forEach(card => {
+  cards.forEach((card) => {
     card.addEventListener("click", () => {
       const id = card.getAttribute("data-id");
       if (id) {
@@ -235,7 +243,6 @@ function enableEventCardClicks() {
     });
   });
 }
-
 
 async function fetchAndDisplayStudents() {
   const container = document.getElementById("studentsList");
@@ -247,8 +254,8 @@ async function fetchAndDisplayStudents() {
     const res = await fetch("http://localhost:5500/api/students", {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (!res.ok) {
@@ -260,7 +267,7 @@ async function fetchAndDisplayStudents() {
     if (students.length === 0) {
       container.innerHTML = "<p>No registered students.</p>";
     } else {
-      students.forEach(student => {
+      students.forEach((student) => {
         const div = document.createElement("div");
         div.className = "col s12 m6 l4";
         div.innerHTML = `
@@ -274,13 +281,12 @@ async function fetchAndDisplayStudents() {
         container.appendChild(div);
       });
     }
-
   } catch (err) {
     console.error(err);
-    container.innerHTML = "<p>Error loading students. Please try again later.</p>";
+    container.innerHTML =
+      "<p>Error loading students. Please try again later.</p>";
   }
 }
-
 
 document.addEventListener("DOMContentLoaded", function () {
   M.AutoInit();
@@ -291,7 +297,6 @@ document.addEventListener("DOMContentLoaded", function () {
 //   var modals = document.querySelectorAll('.modal');
 //   M.Modal.init(modals);
 // });
-
 
 document.addEventListener("DOMContentLoaded", () => {
   const navLinks = document.getElementById("nav-links");
@@ -321,13 +326,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initialize Materialize modals
-  M.Modal.init(document.querySelectorAll('.modal'));
+  M.Modal.init(document.querySelectorAll(".modal"));
 });
 
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("currentUser");
-  M.toast({ html: "Logged out", classes: 'blue' });
+  M.toast({ html: "Logged out", classes: "blue" });
   window.location.href = "index.html";
 }
 
@@ -347,26 +352,25 @@ async function updateAdminProfile(event) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ name, email })
+      body: JSON.stringify({ name, email }),
     });
 
     const data = await res.json();
 
     if (res.ok) {
       localStorage.setItem("currentUser", JSON.stringify(data.user));
-      M.toast({ html: data.message, classes: 'green' });
+      M.toast({ html: data.message, classes: "green" });
       window.location.href = "admin-dashboard.html";
     } else {
-      M.toast({ html: data.message || "Update failed", classes: 'red' });
+      M.toast({ html: data.message || "Update failed", classes: "red" });
     }
   } catch (err) {
     console.error(err);
-    M.toast({ html: "Server error", classes: 'red' });
+    M.toast({ html: "Server error", classes: "red" });
   }
 }
-
 
 async function updateStudentProfile(event) {
   event.preventDefault();
@@ -380,23 +384,23 @@ async function updateStudentProfile(event) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ name, email })
+      body: JSON.stringify({ name, email }),
     });
 
     const data = await res.json();
 
     if (res.ok) {
       localStorage.setItem("currentUser", JSON.stringify(data.user));
-      M.toast({ html: data.message, classes: 'green' });
+      M.toast({ html: data.message, classes: "green" });
       window.location.href = "student-dashboard.html";
     } else {
-      M.toast({ html: data.message || "Update failed", classes: 'red' });
+      M.toast({ html: data.message || "Update failed", classes: "red" });
     }
   } catch (err) {
     console.error(err);
-    M.toast({ html: "Server error", classes: 'red' });
+    M.toast({ html: "Server error", classes: "red" });
   }
 }
 
@@ -409,8 +413,8 @@ async function fetchAdminEvents() {
   try {
     const res = await fetch("http://localhost:5500/api/admin/events", {
       headers: {
-        "Authorization": `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (!res.ok) {
@@ -423,19 +427,25 @@ async function fetchAdminEvents() {
     if (events.length === 0) {
       container.innerHTML = "<p>No events found.</p>";
     } else {
-      events.forEach(event => {
+      events.forEach((event) => {
         const card = document.createElement("div");
         card.className = "col s12 m6 l4";
 
         card.innerHTML = `
           <div class="card z-depth-2">
             <div class="card-content">
-              <span class="card-title"><strong>Event: </strong>${event.title}</span>
-              <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString()}</p>
+              <span class="card-title"><strong>Event: </strong>${
+                event.title
+              }</span>
+              <p><strong>Date:</strong> ${new Date(
+                event.date
+              ).toLocaleDateString()}</p>
               <p><strong>Location:</strong> ${event.location}</p>
               <p><strong>Created By:</strong> ${event.createdBy}</p>
               <div class="card-action">
-              <a href="edit-event.html?id=${event._id}" class="btn btn-sm blue">Edit</a>
+              <a href="edit-event.html?id=${
+                event._id
+              }" class="btn btn-sm blue">Edit</a>
               </div>
             </div>
           </div>
@@ -457,11 +467,14 @@ async function loadStudentRegistrations() {
   if (!user || user.role !== "student" || !container) return;
 
   try {
-    const res = await fetch(`http://localhost:5500/api/registrations?email=${user.email}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`
+    const res = await fetch(
+      `http://localhost:5500/api/registrations?email=${user.email}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       }
-    });
+    );
 
     const registrations = await res.json();
 
@@ -477,7 +490,7 @@ async function loadStudentRegistrations() {
       return;
     }
 
-    registrations.forEach(reg => {
+    registrations.forEach((reg) => {
       const event = reg.eventId;
       const card = document.createElement("div");
       card.className = "col s12 m6 l4";
@@ -485,7 +498,9 @@ async function loadStudentRegistrations() {
         <div class="card">
           <div class="card-content">
             <span class="card-title">${event.title}</span>
-            <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString()}</p>
+            <p><strong>Date:</strong> ${new Date(
+              event.date
+            ).toLocaleDateString()}</p>
             <p><strong>Location:</strong> ${event.location}</p>
             <p><strong>Phone:</strong> ${reg.phone}</p>
           </div>
@@ -511,10 +526,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-
-
 document.addEventListener("DOMContentLoaded", () => {
-  const modal = document.querySelectorAll('.modal');
+  const modal = document.querySelectorAll(".modal");
   M.Modal.init(modal);
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -528,14 +541,15 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadEvent(id) {
   const res = await fetch(`http://localhost:5500/api/events/${id}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`
-    }
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
   });
   const event = await res.json();
 
   document.getElementById("eventTitle").value = event.title;
   document.getElementById("eventDate").value = event.date.split("T")[0];
   document.getElementById("eventLocation").value = event.location;
+  document.getElementById("eventDescription").value = event.description || "";
   M.updateTextFields();
 }
 
@@ -546,23 +560,24 @@ async function updateEvent() {
 
   const title = document.getElementById("eventTitle").value;
   const date = document.getElementById("eventDate").value;
+  const description = document.getElementById("eventDescription").value;
   const location = document.getElementById("eventLocation").value;
 
   const res = await fetch(`http://localhost:5500/api/events/${eventId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
-    body: JSON.stringify({ title, date, location })
+    body: JSON.stringify({ title, date, location, description }),
   });
 
   const data = await res.json();
   if (res.ok) {
-    M.toast({ html: "Event updated successfully", classes: 'green' });
-    setTimeout(() => window.location.href = "admin-dashboard.html", 1500);
+    M.toast({ html: "Event updated successfully", classes: "green" });
+    setTimeout(() => (window.location.href = "admin-dashboard.html"), 1500);
   } else {
-    M.toast({ html: data.message || "Failed to update", classes: 'red' });
+    M.toast({ html: data.message || "Failed to update", classes: "red" });
   }
 }
 
@@ -579,19 +594,18 @@ async function deleteEvent() {
   const res = await fetch(`http://localhost:5500/api/events/${eventId}`, {
     method: "DELETE",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`
-    }
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
   });
 
   const data = await res.json();
   if (res.ok) {
-    M.toast({ html: "Event deleted", classes: 'green' });
-    setTimeout(() => window.location.href = "admin-dashboard.html", 1500);
+    M.toast({ html: "Event deleted", classes: "green" });
+    setTimeout(() => (window.location.href = "admin-dashboard.html"), 1500);
   } else {
-    M.toast({ html: data.message || "Failed to delete", classes: 'red' });
+    M.toast({ html: data.message || "Failed to delete", classes: "red" });
   }
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("currentUser"));
@@ -601,7 +615,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStudentRegistrations();
   }
 });
-
 
 async function loadEventDetailsPage() {
   const params = new URLSearchParams(window.location.search);
@@ -619,6 +632,9 @@ async function loadEventDetailsPage() {
       <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString()}</p>
       <p><strong>Location:</strong> ${event.location}</p>
       <p><strong>Organized by:</strong> ${event.createdBy}</p>
+        <div><strong>Description:</strong><br>${marked.parse(
+          event.description || ""
+        )}</div>
     `;
 
     const user = JSON.parse(localStorage.getItem("currentUser"));
@@ -630,7 +646,8 @@ async function loadEventDetailsPage() {
     localStorage.setItem("selectedEventId", eventId);
   } catch (err) {
     console.error("Error loading event:", err);
-    container.innerHTML = "<p class='text-danger'>Failed to load event details.</p>";
+    container.innerHTML =
+      "<p class='text-danger'>Failed to load event details.</p>";
   }
 }
 
@@ -648,7 +665,6 @@ function goToRegistrationPage() {
   }
 }
 
-
 async function submitEventRegistration(e) {
   e.preventDefault();
 
@@ -664,14 +680,14 @@ async function submitEventRegistration(e) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       body: JSON.stringify({
         eventId,
         studentEmail: user.email,
         studentName: user.name,
-        phone
-      })
+        phone,
+      }),
     });
 
     const data = await res.json();
@@ -694,7 +710,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (window.location.pathname.includes("event-registration.html")) {
-    document.getElementById("registrationForm")
+    document
+      .getElementById("registrationForm")
       .addEventListener("submit", submitEventRegistration);
   }
 });
@@ -707,3 +724,102 @@ document.addEventListener("DOMContentLoaded", () => {
     loadEvent(eventId);
   }
 });
+
+let sortNewest = false;
+
+function fetchEvents(filters = {}) {
+  const container = document.getElementById("events");
+  const search = document.getElementById("searchInput")?.value?.trim();
+
+  if (search) filters.title = search;
+  if (sortNewest) filters.sort = "desc";
+
+  const params = new URLSearchParams(filters).toString();
+  const url = `http://localhost:5500/api/events?${params}`;
+
+  fetch(url)
+    .then((res) => res.json())
+    .then((events) => {
+      container.innerHTML = "";
+      if (events.length === 0) {
+        container.innerHTML = "<p>No events found.</p>";
+        return;
+      }
+
+      events.forEach((event) => {
+        const card = document.createElement("div");
+        card.className = "col s12 m6 l4";
+        card.innerHTML = `
+          <div class="card hoverable event-card" data-id="${event._id}">
+            <div class="card-content">
+              <span class="card-title">${event.title}</span><br> 
+             <p><i class="material-icons left">location_on</i>${event.location}</p><br>
+              <p><i class="material-icons left">event</i>${event.date}</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.querySelectorAll(".event-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          const id = card.getAttribute("data-id");
+          window.location.href = `event-details.html?id=${id}`;
+        });
+      });
+    })
+    .catch((err) => {
+      console.error("Error loading events:", err);
+      container.innerHTML = "<p>Error loading events.</p>";
+    });
+}
+
+function applyFilters() {
+  const filters = {
+    location: document.getElementById("filterLocation").value.trim(),
+    createdBy: document.getElementById("filterCreatedBy").value,
+  };
+
+  fetchEvents(filters);
+}
+
+function resetFilters() {
+  document.getElementById("filterLocation").value = "";
+  document.getElementById("filterCreatedBy").value = "";
+  document.getElementById("searchInput").value = "";
+  sortNewest = false;
+  fetchEvents();
+}
+
+function sortByNewest() {
+  sortNewest = true;
+  fetchEvents();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  M.AutoInit();
+  fetchEvents();
+  populateAdminDropdown();
+  document.getElementById("searchInput")?.addEventListener("input", () => {
+    fetchEvents();
+  });
+});
+
+async function populateAdminDropdown() {
+  try {
+    const res = await fetch("http://localhost:5500/api/admins");
+    const admins = await res.json();
+    const select = document.getElementById("filterCreatedBy");
+
+    admins.forEach((email) => {
+      const option = document.createElement("option");
+      option.value = email;
+      option.textContent = email;
+      select.appendChild(option);
+    });
+
+    M.FormSelect.init(select);
+  } catch (err) {
+    console.error("Failed to load admin list", err);
+  }
+}

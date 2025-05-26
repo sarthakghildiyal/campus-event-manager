@@ -1,54 +1,123 @@
 <!DOCTYPE html>
 <html lang="en-us">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Home Page" />
+    <title>Campus Event Manager</title>
 
-<head>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+  </head>
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Home Page">
+  <body class="grey lighten-4">
+    <nav class="blue darken-3">
+      <div class="nav-wrapper container">
+        <a href="index.html" class="brand-logo">
+          <img src="deakin-logo.webp" alt="Deakin" class="logo" />
+        </a>
+        <ul class="right hide-on-med-and-down" id="nav-links"></ul>
+      </div>
+    </nav>
 
-  <title>Campus Event Manager</title>
-
-  <link rel="stylesheet" href="styles.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-</head>
-
-<body class="grey lighten-4">
-  <nav class="blue darken-3">
-    <div class="nav-wrapper container">
-      <a href="index.html" class="brand-logo"><img src="deakin-logo.webp" alt="Deakin" class="logo"></a>
-      <ul class="right hide-on-med-and-down" id="nav-links"></ul>
+    <!-- Search and Filter Row -->
+    <div class="container" style="margin-top: 30px">
+      <div class="row">
+        <div class="col s12 m9">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search events by title..."
+            class="browser-default"
+          />
+        </div>
+        <div class="col s6 m2">
+          <a
+            href="#filterModal"
+            class="btn btn-small blue modal-trigger"
+            style="width: 100%"
+          >
+            <i class="material-icons left">filter_list</i> Filter
+          </a>
+        </div>
+        <div class="col s6 m1">
+          <a
+            class="btn btn-small grey"
+            style="width: 100%"
+            onclick="sortByNewest()"
+          >
+            <i class="material-icons">sort</i>
+          </a>
+        </div>
+      </div>
     </div>
-  </nav>
 
-  <div class="container mt-4">
-    <h4>Upcoming Events</h4>
-    <div id="events" class="row"></div>
-  </div>
-
-  <!-- Login Modal -->
-  <div id="loginModal" class="modal">
-    <div class="modal-content center-align">
-      <h5>Login As</h5>
-      <a class="btn green" href="student-login.html">Student</a>
-      <a class="btn blue" href="admin-login.html" style="margin-left: 15px;">Admin</a>
+    <!-- Events Section -->
+    <div class="container">
+      <h5>Upcoming Events</h5>
+      <div id="events" class="row"></div>
     </div>
-  </div>
 
-  <!-- Register Modal -->
-  <div id="registerModal" class="modal">
-    <div class="modal-content center-align">
-      <h5>Register As</h5>
-      <a class="btn green" href="student-register.html">Student</a>
-      <a class="btn blue" href="admin-register.html" style="margin-left: 15px;">Admin</a>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+      <div class="modal-content center-align">
+        <h5>Login As</h5>
+        <a class="btn green" href="student-login.html">Student</a>
+        <a class="btn blue" href="admin-login.html" style="margin-left: 15px"
+          >Admin</a
+        >
+      </div>
     </div>
-  </div>
 
-  <script src="script.js"></script>
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+      <div class="modal-content center-align">
+        <h5>Register As</h5>
+        <a class="btn green" href="student-register.html">Student</a>
+        <a class="btn blue" href="admin-register.html" style="margin-left: 15px"
+          >Admin</a
+        >
+      </div>
+    </div>
 
-</body>
+    <!-- Filter Modal (Materialize) -->
+    <div id="filterModal" class="modal">
+      <div class="modal-content">
+        <h5>Filter Events</h5>
+        <div class="input-field">
+          <input type="text" id="filterLocation" />
+          <label for="filterLocation">Location</label>
+        </div>
+        <div class="input-field">
+          <select id="filterCreatedBy">
+            <option value="" selected>Choose admin</option>
+          </select>
+          <label for="filterCreatedBy">Created By (Admin Email)</label>
+        </div>
+        <!-- <div class="input-field">
+          <input type="date" id="filterDate" />
+          <label for="filterDate">Date (On or After)</label>
+        </div> -->
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close btn grey" onclick="resetFilters()"
+          >Clear</a
+        >
+        <a href="#!" class="modal-close btn green" onclick="applyFilters()"
+          >Apply</a
+        >
+        <a href="index.html" class="modal-close btn red">Back</a>
+      </div>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="script.js"></script>
+  </body>
 </html>
