@@ -1,0 +1,36 @@
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  gap: 6rem;
+
+  background-image: url("images/daekinUni.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+.logo {
+  height: 50px;
+  margin-right: 10px;
+  padding-top: 0.5rem;
+}
+.mt-2 {
+  margin-top: 1rem;
+}
+
+.p-4 {
+  padding: 2rem !important;
+}
+
+/* .overlay {
+  border-image: fill 1
+    linear-gradient(hsla(0, 54%, 77%, 0.484), hsla(0, 54%, 77%, 0.555));
+} */
+
+.glass-effect {
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+}
